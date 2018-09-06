@@ -50,12 +50,6 @@ $(warning LSE atomics not supported by binutils)
   endif
 endif
 
-ifeq ($(cc-name),clang)
-# This is a workaround for https://bugs.llvm.org/show_bug.cgi?id=30792.
-# TODO: revert when this is fixed in LLVM.
-KBUILD_CFLAGS	+= -mno-implicit-float
-endif
-
 ifeq ($(CONFIG_COMPAT_VDSO), y)
   CROSS_COMPILE_ARM32 ?= $(CONFIG_CROSS_COMPILE_ARM32:"%"=%)
    # Check that the user has provided a valid prefix for the 32-bit toolchain.
