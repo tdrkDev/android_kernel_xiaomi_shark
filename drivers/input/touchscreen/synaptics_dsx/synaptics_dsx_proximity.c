@@ -54,7 +54,7 @@ static ssize_t synaptics_rmi4_hover_finger_en_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t count);
 
 static struct device_attribute attrs[] = {
-	__ATTR(hover_finger_en, 0664,
+	__ATTR(hover_finger_en, (S_IRUGO | S_IWUGO),
 			synaptics_rmi4_hover_finger_en_show,
 			synaptics_rmi4_hover_finger_en_store),
 };
@@ -421,7 +421,7 @@ static ssize_t synaptics_rmi4_hover_finger_en_store(struct device *dev,
 	if (!prox)
 		return -ENODEV;
 
-	if (kstrtouint(buf, 16, &input) != 1)
+	if (sscanf(buf, "%x", &input) != 1)
 		return -EINVAL;
 
 	if (input == 1)

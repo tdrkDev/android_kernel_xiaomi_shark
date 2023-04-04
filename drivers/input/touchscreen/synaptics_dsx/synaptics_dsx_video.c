@@ -43,7 +43,7 @@
 #define SYSFS_FOLDER_NAME "video"
 
 /*
-*#define RMI_DCS_SUSPEND_RESUME
+#define RMI_DCS_SUSPEND_RESUME
 */
 
 static ssize_t video_sysfs_dcs_write_store(struct device *dev,
@@ -112,10 +112,10 @@ static struct dcs_command resume_sequence[] = {
 #endif
 
 static struct device_attribute attrs[] = {
-	__ATTR(dcs_write, 0220,
+	__ATTR(dcs_write, (S_IWUSR | S_IWGRP),
 			synaptics_rmi4_show_error,
 			video_sysfs_dcs_write_store),
-	__ATTR(param, 0220,
+	__ATTR(param, (S_IWUSR | S_IWGRP),
 			synaptics_rmi4_show_error,
 			video_sysfs_param_store),
 };
@@ -130,7 +130,7 @@ static ssize_t video_sysfs_dcs_write_store(struct device *dev,
 	int retval;
 	unsigned int input;
 
-	if (kstrtouint(buf, 16, &input) != 1)
+	if (sscanf(buf, "%x", &input) != 1)
 		return -EINVAL;
 
 	retval = video_send_dcs_command((unsigned char)input);
@@ -145,7 +145,7 @@ static ssize_t video_sysfs_param_store(struct device *dev,
 {
 	unsigned int input;
 
-	if (kstrtouint(buf, 16, &input) != 1)
+	if (sscanf(buf, "%x", &input) != 1)
 		return -EINVAL;
 
 	video->param = (unsigned char)input;
