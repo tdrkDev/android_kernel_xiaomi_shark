@@ -593,6 +593,10 @@ int dsi_display_set_backlight(void *display, u32 bl_lvl);
  */
 int dsi_display_check_status(void *display, bool te_check_override);
 
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+int notify_iris_esd_cancel(void *display);
+#endif
+
 /**
  * dsi_display_cmd_transfer() - transfer command to the panel
  * @display:            Handle to display.

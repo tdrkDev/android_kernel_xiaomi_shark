@@ -258,6 +258,10 @@ struct sde_connector_ops {
 	 */
 	int (*check_status)(void *display, bool te_check_override);
 
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	int (*cancel_esd_thread)(void *display);
+#endif
+
 	/**
 	 * cmd_transfer - Transfer command to the connected display panel
 	 * @display: Pointer to private display handle

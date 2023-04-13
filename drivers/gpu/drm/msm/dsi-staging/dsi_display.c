@@ -31,6 +31,9 @@
 #include "dsi_clk.h"
 #include "dsi_pwr.h"
 #include "sde_dbg.h"
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+#include "dsi_iris2p_api.h"
+#endif
 
 #define to_dsi_display(x) container_of(x, struct dsi_display, host)
 #define INT_BASE_10 10
@@ -442,7 +445,11 @@ static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 
 	mutex_lock(&display->drm_dev->struct_mutex);
 	display->tx_cmd_buf = msm_gem_new(display->drm_dev,
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+			SZ_512K,
+#else
 			SZ_4K,
+#endif
 			MSM_BO_UNCACHED);
 	mutex_unlock(&display->drm_dev->struct_mutex);
 
@@ -451,9 +458,11 @@ static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 		rc = -ENOMEM;
 		goto error;
 	}
-
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	display->cmd_buffer_size = SZ_512K;
+#else
 	display->cmd_buffer_size = SZ_4K;
-
+#endif
 	display->aspace = msm_gem_smmu_address_space_get(
 			display->drm_dev, MSM_SMMU_DOMAIN_UNSECURE);
 	if (!display->aspace) {
@@ -486,7 +495,11 @@ static int dsi_host_alloc_cmd_tx_buffer(struct dsi_display *display)
 
 	for (cnt = 0; cnt < display->ctrl_count; cnt++) {
 		display_ctrl = &display->ctrl[cnt];
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+		display_ctrl->ctrl->cmd_buffer_size = SZ_512K;
+#else
 		display_ctrl->ctrl->cmd_buffer_size = SZ_4K;
+#endif
 		display_ctrl->ctrl->cmd_buffer_iova =
 					display->cmd_buffer_iova;
 		display_ctrl->ctrl->vaddr = display->vaddr;
@@ -727,6 +740,14 @@ static int dsi_display_status_check_te(struct dsi_display *display)
 	return rc;
 }
 
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+int notify_iris_esd_cancel(void *display)
+{
+	notify_iris_esd_exit();
+
+	return 0;
+}
+#endif
 int dsi_display_check_status(void *display, bool te_check_override)
 {
 	struct dsi_display *dsi_display = display;
@@ -755,6 +776,14 @@ int dsi_display_check_status(void *display, bool te_check_override)
 		return rc;
 	}
 
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	/* use i2c to read register */
+	if (status_mode == ESD_MODE_REG_READ) {
+		rc = get_iris_status();
+		mutex_unlock(&dsi_display->display_lock);
+		return rc;
+	}
+#endif
 	if (te_check_override && gpio_is_valid(dsi_display->disp_te_gpio))
 		status_mode = ESD_MODE_PANEL_TE;
 	else
@@ -4900,6 +4929,9 @@ static int dsi_display_bind(struct device *dev,
 
 	pr_info("Successfully bind display panel '%s'\n", display->name);
 	display->drm_dev = drm;
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	iris_drm_device_handle_get(display->drm_dev);
+#endif
 
 	for (i = 0; i < display->ctrl_count; i++) {
 		display_ctrl = &display->ctrl[i];
@@ -6644,6 +6676,12 @@ int dsi_display_enable(struct dsi_display *display)
 		}
 
 		display->panel->panel_initialized = true;
+		#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+			/* add clk enable interface */
+			iris_clk_on(display->panel);
+			iris_firmware_download_cont_splash(display->panel);
+			iris_work_enable(1);
+		#endif
 		pr_debug("cont splash enabled, display enable not required\n");
 		return 0;
 	}
@@ -6895,6 +6933,9 @@ int dsi_display_unprepare(struct dsi_display *display)
 
 static int __init dsi_display_register(void)
 {
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	iris2p_register_fs();
+#endif
 	dsi_phy_drv_register();
 	dsi_ctrl_drv_register();
 	return platform_driver_register(&dsi_display_driver);
@@ -6902,6 +6943,9 @@ static int __init dsi_display_register(void)
 
 static void __exit dsi_display_unregister(void)
 {
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	iris2p_unregister_fs();
+#endif
 	platform_driver_unregister(&dsi_display_driver);
 	dsi_ctrl_drv_unregister();
 	dsi_phy_drv_unregister();
