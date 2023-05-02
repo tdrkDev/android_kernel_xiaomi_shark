@@ -874,6 +874,7 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 		goto release_mutex;
 	}
 
+	CAM_DBG(CAM_CSIPHY, "Dev ref Cnt: %d",csiphy_dev->start_dev_count);
 release_mutex:
 	mutex_unlock(&csiphy_dev->mutex);
 
