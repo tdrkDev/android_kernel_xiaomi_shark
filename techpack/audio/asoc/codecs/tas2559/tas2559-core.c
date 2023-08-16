@@ -717,11 +717,6 @@ int tas2559_set_VBoost(struct tas2559_priv *pTAS2559, int vboost, bool bPowerOn)
 		goto end;
 	}
 
-	if (get_hw_version_platform() == HARDWARE_PLATFORM_BERYLLIUM) {
-		pTAS2559->mbLoadVBoostPrePowerUp = true;
-		pTAS2559->mnVBoostNewState = vboost;
-	}
-
 	if (bPowerOn) {
 		dev_info(pTAS2559->dev, "%s, will load VBoost state next time before power on\n", __func__);
 		pTAS2559->mbLoadVBoostPrePowerUp = true;
@@ -778,15 +773,6 @@ int tas2559_set_VBoost(struct tas2559_priv *pTAS2559, int vboost, bool bPowerOn)
 			if (nResult < 0)
 				goto end;
 
-			if (get_hw_version_platform() == HARDWARE_PLATFORM_BERYLLIUM) {
-				nResult = pTAS2559->update_bits(pTAS2559, DevA, TAS2559_VBOOST_CTL_REG, 0x40, 0x40);
-				if (nResult < 0)
-					goto end;
-				nResult = pTAS2559->update_bits(pTAS2559, DevA, TAS2559_SLEEPMODE_CTL_REG, 0x40, 0x00);
-				if (nResult < 0)
-					goto end;
-				pTAS2559->mnVBoostState |= TAS2559_VBST_A_ON;
-			} else {
 				if (!(pTAS2559->mnVBoostState & TAS2559_VBST_A_ON)) {
 					nResult = pTAS2559->update_bits(pTAS2559, DevA, TAS2559_VBOOST_CTL_REG, 0x40, 0x40);
 					if (nResult < 0)
@@ -796,7 +782,6 @@ int tas2559_set_VBoost(struct tas2559_priv *pTAS2559, int vboost, bool bPowerOn)
 						goto end;
 					pTAS2559->mnVBoostState |= TAS2559_VBST_A_ON;
 				}
-			}
 			dev_dbg(pTAS2559->dev, "%s, devA Boost On, %d\n", __func__, pTAS2559->mnVBoostState);
 		} else {
 			if (pTAS2559->mnVBoostState & TAS2559_VBST_A_ON) {
@@ -849,12 +834,7 @@ int tas2559_set_VBoost(struct tas2559_priv *pTAS2559, int vboost, bool bPowerOn)
 		}
 	}
 
-	if (get_hw_version_platform() == HARDWARE_PLATFORM_BERYLLIUM) {
-		pTAS2559->mbLoadVBoostPrePowerUp = true;
-		pTAS2559->mnVBoostNewState = pTAS2559->mnVBoostState;
-	} else {
 		pTAS2559->mbLoadVBoostPrePowerUp = false;
-	}
 
 end:
 
@@ -1200,10 +1180,6 @@ int tas2559_enable(struct tas2559_priv *pTAS2559, bool bEnable)
 				pTAS2559->mbLoadConfigurationPrePowerUp = false;
 				nResult = tas2559_load_coefficient(pTAS2559,
 								pTAS2559->mnCurrentConfiguration, pTAS2559->mnNewConfiguration, false);
-				if (get_hw_version_platform() == HARDWARE_PLATFORM_BERYLLIUM &&
-						pTAS2559->mnCurrentConfiguration != pTAS2559->mnNewConfiguration) {
-					pTAS2559->mbLoadVBoostPrePowerUp = true;
-				}
 				if (nResult < 0)
 					goto end;
 			}
@@ -1217,9 +1193,6 @@ int tas2559_enable(struct tas2559_priv *pTAS2559, bool bEnable)
 				nResult = tas2559_set_VBoost(pTAS2559, pTAS2559->mnVBoostNewState, false);
 				if (nResult < 0)
 					goto end;
-				if (get_hw_version_platform() == HARDWARE_PLATFORM_BERYLLIUM) {
-					pTAS2559->mbLoadVBoostPrePowerUp = false;
-				}
 			}
 
 			pTAS2559->read(pTAS2559, DevA, TAS2559_VBOOST_CTL_REG, &nValue);
