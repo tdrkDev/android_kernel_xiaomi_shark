@@ -385,7 +385,7 @@ void iris_gamma_table_reg_add(u32 addr, u32 val, bool last)
 {
 	static u32 gamma_len = 0;
 	static struct dsi_cmd_desc iris_gamma_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, gamma_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, CMD_PKT_SIZE, gamma_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
 
 	static u32 reg_indx = 0;
 
@@ -484,7 +484,7 @@ void iris_mipi_reg_write(u32 addr, u32 value)
 		PWIL_U32(0x00000000)
 	};
 	struct dsi_cmd_desc iris_reg_write_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(reg_write), reg_write, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(reg_write), reg_write, 1, iris_read_cmd_buf}, 1, 0};
 
 	*(u32 *)(reg_write + 16) = cpu_to_le32(addr);
 	*(u32 *)(reg_write + 20) = cpu_to_le32(value);
@@ -503,7 +503,7 @@ int iris_mipi_reg_read(u32 addr, u32 *value)
 	char reg_read[1] = {0x0};
 	const struct mipi_dsi_host_ops *ops = iris_panel->host->ops;
 	struct dsi_cmd_desc reg_write_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(reg_address), reg_address, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(reg_address), reg_address, 1, iris_read_cmd_buf}, 1, 0};
 	struct dsi_cmd_desc reg_read_cmds = {
 		{0, MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM, 0, 0, sizeof(reg_read), reg_read, 4, iris_read_cmd_buf}, 1, 0};
 	int rc = 0;
@@ -564,7 +564,7 @@ void iris_datapath_csc_enable(u32 hdr_en)
 {
 	u32 grcp_len = 0;
 	struct dsi_cmd_desc iris_grcp_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
 
 	memset(&grcp_cmd, 0, sizeof(grcp_cmd));
 	memcpy(grcp_cmd.cmd, grcp_header, GRCP_HEADER);
@@ -1487,7 +1487,7 @@ void iris_cmd_kickoff_proc(void)
 	u32 grcp_len = 0;
 	static bool first_boot = true;
 	struct dsi_cmd_desc iris_meta_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, meta_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, CMD_PKT_SIZE, meta_cmd.cmd, 1, iris_read_cmd_buf}, 1, 0};
 
 	if ((false == iris_appcode_ready_wait()) || (!iris_panel->panel_initialized))
 		return;

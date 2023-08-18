@@ -665,7 +665,7 @@ u8 iris_mipi_power_mode_read(struct dsi_panel *panel, enum dsi_cmd_set_state sta
 	char get_power_mode[1] = {0x0a};
 	const struct mipi_dsi_host_ops *ops = panel->host->ops;
 	struct dsi_cmd_desc cmds = {
-		{0, MIPI_DSI_DCS_READ, 0, 0, sizeof(get_power_mode), get_power_mode, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_DCS_READ, 0, 0, 0, sizeof(get_power_mode), get_power_mode, 1, iris_read_cmd_buf}, 1, 0};
 	int rc = 0;
 	u8 data = 0xff;
 
@@ -728,7 +728,7 @@ void iris_mipirx_mode_set(struct dsi_panel *panel, int mode, enum dsi_cmd_set_st
 {
 	char mipirx_mode[1] = {0x3f};
 	struct dsi_cmd_desc iris_mipirx_mode_cmds = {
-		{0, MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM, 0, 0, sizeof(mipirx_mode), mipirx_mode, 1, iris_read_cmd_buf}, 1, CMD_PROC};
+		{0, MIPI_DSI_GENERIC_SHORT_WRITE_1_PARAM, 0, 0, 0, sizeof(mipirx_mode), mipirx_mode, 1, iris_read_cmd_buf}, 1, CMD_PROC};
 	switch (mode) {
 	case MCU_VIDEO:
 		mipirx_mode[0] = 0x3f;
@@ -758,9 +758,9 @@ void iris_mipirx_mode_set(struct dsi_panel *panel, int mode, enum dsi_cmd_set_st
 void iris_init_cmd_send(struct dsi_panel *panel, enum dsi_cmd_set_state state)
 {
 	struct dsi_cmd_desc iris_init_info_cmds[] = {
-		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, init_cmd[0].cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC},
-		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, init_cmd[1].cmd, 1, iris_read_cmd_buf}, 1, MCU_PROC * 2},
-		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, init_cmd[2].cmd, 1, iris_read_cmd_buf}, 1, MCU_PROC * 2},
+		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PROC, CMD_PKT_SIZE, init_cmd[0].cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC},
+		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, MCU_PROC * 2, CMD_PKT_SIZE, init_cmd[1].cmd, 1, iris_read_cmd_buf}, 1, MCU_PROC * 2},
+		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, MCU_PROC * 2, CMD_PKT_SIZE, init_cmd[2].cmd, 1, iris_read_cmd_buf}, 1, MCU_PROC * 2},
 	};
 
 	iris_init_info_cmds[0].msg.tx_len = init_cmd[0].cmd_len;
@@ -798,8 +798,8 @@ void iris_timing_info_send(struct dsi_panel *panel, enum dsi_cmd_set_state state
 		PWIL_U32(0x80)
 	};
 	struct dsi_cmd_desc iris_timing_info_cmd[] = {
-		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(iris_workmode), iris_workmode, 1, iris_read_cmd_buf}, 1, MCU_PROC},
-		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(iris_timing), iris_timing, 1, iris_read_cmd_buf}, 1, MCU_PROC},
+		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, MCU_PROC, sizeof(iris_workmode), iris_workmode, 1, iris_read_cmd_buf}, 1, MCU_PROC},
+		{{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, MCU_PROC, sizeof(iris_timing), iris_timing, 1, iris_read_cmd_buf}, 1, MCU_PROC},
 	};
 	struct iris_timing_info *pinput_timing = &(iris_info.input_timing);
 	struct iris_timing_info *poutput_timing = &(iris_info.output_timing);
@@ -840,7 +840,7 @@ void iris_ctrl_cmd_send(struct dsi_panel *panel, u8 cmd, enum dsi_cmd_set_state 
 		PWIL_U32(0x00040000),
 	};
 	struct dsi_cmd_desc iris_romcode_ctrl_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(romcode_ctrl), romcode_ctrl, 1, iris_read_cmd_buf}, 1, CMD_PROC};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PROC, sizeof(romcode_ctrl), romcode_ctrl, 1, iris_read_cmd_buf}, 1, CMD_PROC};
 
 	if ((cmd | CONFIG_DATAPATH) || (cmd | ENABLE_DPORT) || (cmd | REMAP))
 		iris_romcode_ctrl_cmd.post_wait_ms = INIT_WAIT;
@@ -858,7 +858,7 @@ void iris_feature_init_cmd_send(struct dsi_panel *panel, enum dsi_cmd_set_state 
 	struct iris_setting_update *settint_update = &iris_info.settint_update;
 	u32 grcp_len = 0;
 	struct dsi_cmd_desc iris_pq_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PROC, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC};
 
 	if (iris_debug_fw_download_disable)
 		return;
@@ -933,7 +933,7 @@ void iris_dtg_setting_cmd_send(struct dsi_panel *panel, enum dsi_cmd_set_state s
 	u32 grcp_len = 0;
 	struct iris_dtg_setting *dtg_setting = &iris_info.dtg_setting;
 	struct dsi_cmd_desc iris_dtg_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, CMD_PROC, CMD_PKT_SIZE, grcp_cmd.cmd, 1, iris_read_cmd_buf}, 1, CMD_PROC};
 
 	memset(&grcp_cmd, 0, sizeof(grcp_cmd));
 	memcpy(grcp_cmd.cmd, grcp_header, GRCP_HEADER);
@@ -984,7 +984,7 @@ void iris_pwil_mode_set(struct dsi_panel *panel, u8 mode, enum dsi_cmd_set_state
 {
 	char pwil_mode[2] = {0x00, 0x00};
 	struct dsi_cmd_desc iris_pwil_mode_cmd = {
-		{0, MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM, 0, 0, sizeof(pwil_mode), pwil_mode, 1, iris_read_cmd_buf}, 1, CMD_PROC};
+		{0, MIPI_DSI_GENERIC_SHORT_WRITE_2_PARAM, 0, 0, CMD_PROC, sizeof(pwil_mode), pwil_mode, 1, iris_read_cmd_buf}, 1, CMD_PROC};
 
 	if (PT_MODE == mode) {
 		pwil_mode[0] = 0x0;
@@ -1010,10 +1010,10 @@ void iris_mipi_mem_addr_cmd_send(struct dsi_panel *panel, u16 column, u16 page, 
 	char col_addr[5] = {0x2a, 0x00, 0x00, 0x03, 0xff};
 	char page_addr[5] = {0x2b, 0x00, 0x00, 0x03, 0xff};
 	struct dsi_cmd_desc iris_mem_addr_cmd[] = {
-		{{0, MIPI_DSI_DCS_SHORT_WRITE_PARAM, 0, 0, sizeof(mem_addr), mem_addr, 1, iris_read_cmd_buf}, 0, 0},
-		{{0, MIPI_DSI_DCS_SHORT_WRITE_PARAM, 0, 0, sizeof(pixel_format), pixel_format, 1, iris_read_cmd_buf}, 0, 0},
-		{{0, MIPI_DSI_DCS_LONG_WRITE, 0, 0, sizeof(col_addr), col_addr, 1, iris_read_cmd_buf}, 0, 0},
-		{{0, MIPI_DSI_DCS_LONG_WRITE, 0, 0, sizeof(page_addr), page_addr, 1, iris_read_cmd_buf}, 1, 0},
+		{{0, MIPI_DSI_DCS_SHORT_WRITE_PARAM, 0, 0, 0, sizeof(mem_addr), mem_addr, 1, iris_read_cmd_buf}, 0, 0},
+		{{0, MIPI_DSI_DCS_SHORT_WRITE_PARAM, 0, 0, 0, sizeof(pixel_format), pixel_format, 1, iris_read_cmd_buf}, 0, 0},
+		{{0, MIPI_DSI_DCS_LONG_WRITE, 0, 0, 0, sizeof(col_addr), col_addr, 1, iris_read_cmd_buf}, 0, 0},
+		{{0, MIPI_DSI_DCS_LONG_WRITE, 0, 0, 0, sizeof(page_addr), page_addr, 1, iris_read_cmd_buf}, 1, 0},
 	};
 
 	col_addr[3] = (column >> 8) & 0xff;
@@ -1123,7 +1123,7 @@ void iris_firmware_download_prepare(struct dsi_panel *panel, size_t size)
 	};
 	u32 threshold = 0, fw_hres, fw_vres;
 	struct dsi_cmd_desc fw_download_config_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(fw_download_config), fw_download_config, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(fw_download_config), fw_download_config, 1, iris_read_cmd_buf}, 1, 0};
 
 
 	threshold = 200000; //ctrl->pclk_rate / 1000;
@@ -1181,7 +1181,7 @@ u16 iris_mipi_fw_download_result_read(struct dsi_panel *panel)
 	char mipirx_status[1] = {0xaf};
 	const struct mipi_dsi_host_ops *ops = panel->host->ops;
 	struct dsi_cmd_desc cmds = {
-		{0, MIPI_DSI_DCS_READ, 0, 0, sizeof(mipirx_status), mipirx_status, 2, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_DCS_READ, 0, 0, 0, sizeof(mipirx_status), mipirx_status, 2, iris_read_cmd_buf}, 1, 0};
 	int rc = 0;
 	u16 data = 0xffff;
 
@@ -1264,7 +1264,7 @@ void iris_firmware_download_restore(struct dsi_panel *panel, bool cont_splash)
 	};
 	u32 col_addr = 0, page_addr = 0;
 	struct dsi_cmd_desc fw_download_restore_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(fw_download_restore), fw_download_restore, 1, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(fw_download_restore), fw_download_restore, 1, iris_read_cmd_buf}, 1, 0};
 
 	if (DSI_OP_CMD_MODE == iris_info.work_mode.rx_mode)
 		fw_download_restore[20] += (2 << 1);
@@ -1679,7 +1679,7 @@ void iris_dport_enable_cmd_send(struct dsi_panel *panel, bool enable)
 		PWIL_U32(0x000f0001)
 	};
 	struct dsi_cmd_desc dport_enable_cmd = {
-		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, sizeof(dport_enable), dport_enable, 1, iris_read_cmd_buf}, 1, 16};
+		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(dport_enable), dport_enable, 1, iris_read_cmd_buf}, 1, 16};
 
 	if (enable)
 		dport_enable[20] = 0x03;
