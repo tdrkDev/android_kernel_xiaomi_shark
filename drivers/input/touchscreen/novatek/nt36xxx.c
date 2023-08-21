@@ -1358,23 +1358,6 @@ static int drm_notifier_callback(struct notifier_block *nb, unsigned long val, v
 
     if (evdata && evdata->data && val == DRM_EVENT_BLANK && info) {
         blank = *(int *)(evdata->data);
-
-        switch (blank) {
-        case DRM_BLANK_POWERDOWN:
-
-            NVT_LOG("%s: DRM_BLANK_POWERDOWN\n", __func__);
-            nvt_ts_suspend(&info->client->dev);
-            break;
-
-        case DRM_BLANK_UNBLANK:
-
-            NVT_LOG("%s: DRM_BLANK_UNBLANK\n", __func__);
-            nvt_ts_resume(&info->client->dev);
-            break;
-
-        default:
-            break;
-        }
     }
 
     return NOTIFY_OK;
