@@ -847,9 +847,6 @@ static int drm_notifier_callback(struct notifier_block *nb, unsigned long val, v
 	if (evdata && evdata->data && val == DRM_EVENT_BLANK && gf_dev) {
 		blank = *(int *)(evdata->data);
 		switch (blank) {
-		case DRM_BLANK_POWERDOWN:
-            pr_info("DRM_BLANK_POWERDOWN\n");
-
 			if (gf_dev->device_available == 1) {
 				gf_dev->fb_black = 1;
 #if defined(GF_NETLINK_ENABLE)
