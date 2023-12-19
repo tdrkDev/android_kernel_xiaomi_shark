@@ -575,10 +575,12 @@
 	qcom,aux-en-gpio = <&tlmm 43 0>;
 	qcom,aux-sel-gpio = <&tlmm 51 0>;
 	qcom,usbplug-cc-gpio = <&tlmm 38 0>;
+
+	status = "disabled";
 };
 
 &mdss_mdp {
-	connectors = <&sde_rscc &sde_wb &sde_dp>;
+	connectors = <&sde_rscc &sde_wb>;
 };
 
 &dsi_dual_nt35597_truly_video {
