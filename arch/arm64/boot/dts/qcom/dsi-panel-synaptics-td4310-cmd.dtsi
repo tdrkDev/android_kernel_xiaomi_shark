@@ -19,7 +19,6 @@
 		qcom,mdss-dsi-panel-destination = "display_1";
 		qcom,mdss-dsi-virtual-channel-id = <0>;
 		qcom,mdss-dsi-stream = <0>;
-		//qcom,mdss-dsi-panel-hdr-enabled;
 		qcom,mdss-dsi-panel-hdr-color-primaries = <14500 15500 32000
 			17000 15500 30000 8000 3000>;
 		qcom,mdss-dsi-panel-peak-brightness = <4200000>;
@@ -31,13 +30,11 @@
 		qcom,mdss-dsi-lane-1-state;
 		qcom,mdss-dsi-lane-2-state;
 		qcom,mdss-dsi-lane-3-state;
-		/*qcom,cmd-sync-wait-broadcast;*/
 		qcom,mdss-dsi-dma-trigger = "trigger_sw";
 		qcom,mdss-dsi-mdp-trigger = "none";
 		qcom,mdss-dsi-reset-sequence = <1 1>, <0 1>, <1 10>;
 		qcom,mdss-pan-physical-width-dimension = <74>;
 		qcom,mdss-pan-physical-height-dimension = <131>;
-		/*qcom,mdss-dsi-tx-eot-append;*/
 		qcom,mdss-dsi-underflow-color = <0x3ff>;
 		qcom,mdss-dsi-border-color = <0>;
 		qcom,mdss-dsi-bpp = <24>;
@@ -71,10 +68,11 @@
 					15 01 00 00 00 00 02 ff 10
 					15 01 00 00 00 00 02 35 00
 					05 01 00 00 00 00 02 11 00
-					];
+				];
 				qcom,mdss-dsi-off-command = [
-				05 01 00 00 32 00 02 28 00
-				05 01 00 00 78 00 02 10 00];
+					05 01 00 00 32 00 02 28 00
+					05 01 00 00 78 00 02 10 00
+				];
 				qcom,mdss-dsi-on-command-state = "dsi_lp_mode";
 				qcom,mdss-dsi-off-command-state = "dsi_hs_mode";
 				qcom,mdss-dsi-h-sync-pulse = <0>;
