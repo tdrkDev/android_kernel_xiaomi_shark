@@ -4293,15 +4293,6 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	}
 	iris_pre_lightup(panel);
 #endif
-	/* charger don't change lcd refresh direction */
-	if(!!strncmp(g_boot_mode, "charger", 7)) {
-		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_LCD_REFRESH_DIRECTION);
-		if (rc) {
-			pr_err("[%s] failed DSI_CMD_SET_LCD_REFRESH_DIRECTION cmds, rc=%d\n",
-			       panel->name, rc);
-		}
-	}
-
 
 	rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_SET_ON);
 	if (rc) {

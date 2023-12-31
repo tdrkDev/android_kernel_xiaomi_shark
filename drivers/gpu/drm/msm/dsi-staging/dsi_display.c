@@ -744,7 +744,6 @@ static int dsi_display_status_check_te(struct dsi_display *display)
 int notify_iris_esd_cancel(void *display)
 {
 	notify_iris_esd_exit();
-
 	return 0;
 }
 #endif
@@ -776,18 +775,19 @@ int dsi_display_check_status(void *display, bool te_check_override)
 		return rc;
 	}
 
-#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
-	/* use i2c to read register */
-	if (status_mode == ESD_MODE_REG_READ) {
-		rc = get_iris_status();
-		mutex_unlock(&dsi_display->display_lock);
-		return rc;
-	}
-#endif
 	if (te_check_override && gpio_is_valid(dsi_display->disp_te_gpio))
 		status_mode = ESD_MODE_PANEL_TE;
 	else
 		status_mode = panel->esd_config.status_mode;
+
+#if defined(CONFIG_IRIS2P_FULL_SUPPORT)
+	/* use i2c to read register */
+	if (status_mode == ESD_MODE_REG_READ) {
+		rc = get_iris_status();
+		dsi_panel_release_panel_lock(panel);
+		return rc;
+	}
+#endif
 
 	dsi_display_clk_ctrl(dsi_display->dsi_clk_handle,
 		DSI_ALL_CLKS, DSI_CLK_ON);

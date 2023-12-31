@@ -430,6 +430,10 @@ void iris_gamma_table_update(struct feature_setting *chip_setting)
 
 	if (chip_setting->hdr_setting.hdren)
 		index = 3;
+	else if (chip_setting->sdr_setting.sdr2hdr == 1)
+ 		index = 4;
+ 	else if (chip_setting->sdr_setting.sdr2hdr == 2)
+ 		index = 5;
 	else if (chip_setting->cm_setting.cm3d == CM_NTSC)
 		index = 0;
 	else if (chip_setting->cm_setting.cm3d == CM_sRGB)
@@ -505,7 +509,7 @@ int iris_mipi_reg_read(u32 addr, u32 *value)
 	struct dsi_cmd_desc reg_write_cmd = {
 		{0, MIPI_DSI_GENERIC_LONG_WRITE, 0, 0, 0, sizeof(reg_address), reg_address, 1, iris_read_cmd_buf}, 1, 0};
 	struct dsi_cmd_desc reg_read_cmds = {
-		{0, MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM, 0, 0, sizeof(reg_read), reg_read, 4, iris_read_cmd_buf}, 1, 0};
+		{0, MIPI_DSI_GENERIC_READ_REQUEST_1_PARAM, 0, 0, 0, sizeof(reg_read), reg_read, 4, iris_read_cmd_buf}, 1, 0};
 	int rc = 0;
 
 	*(u32 *)(reg_address + 12) = cpu_to_le32(addr);
@@ -527,36 +531,55 @@ int iris_mipi_reg_read(u32 addr, u32 *value)
 	return rc;
 }
 
-void iris_cmlut_table_update(struct dsi_panel *panel, u32 cm3d)
+void iris_cmlut_table_update(struct dsi_panel *panel,
+							 struct feature_setting *chip_setting)
 {
 	struct iris_lut_info *lut_info = &iris_info.lut_info;
+	u32 temp_value = chip_setting->cm_setting.color_temp * 100;
+ 	u32 temp_adjust = chip_setting->cm_setting.color_temp_adjust * 100;
 
 	if (!lut_info->lut_fw_state)
 		return;
 
-	switch (cm3d) {
-		case CM_NTSC:		//table for NTSC
-		iris_cmlut_grcp_set(panel, CMI_NTSC_2800, (u32)IRIS_CMLUT_2800K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_NTSC_6500_C51_ENDIAN, (u32)IRIS_CMLUT_6500K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_NTSC_8000, (u32)IRIS_CMLUT_8000K_ADDR);
-		break;
-		case CM_sRGB:		//table for SRGB
-		iris_cmlut_grcp_set(panel, CMI_SRGB_2800, (u32)IRIS_CMLUT_2800K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_SRGB_6500_C51_ENDIAN, (u32)IRIS_CMLUT_6500K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_SRGB_8000, (u32)IRIS_CMLUT_8000K_ADDR);
-		break;
-		case CM_DCI_P3:		//table for DCI-P3
-		iris_cmlut_grcp_set(panel, CMI_P3_2800, (u32)IRIS_CMLUT_2800K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_P3_6500_C51_ENDIAN, (u32)IRIS_CMLUT_6500K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_P3_8000, (u32)IRIS_CMLUT_8000K_ADDR);
-		break;
-		case CM_HDR:       //table for HDR
-		iris_cmlut_grcp_set(panel, CMI_HDR_2800, (u32)IRIS_CMLUT_2800K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_HDR_6500_C51_ENDIAN, (u32)IRIS_CMLUT_6500K_ADDR);
-		iris_cmlut_grcp_set(panel, CMI_HDR_8000, (u32)IRIS_CMLUT_8000K_ADDR);
-		break;
-	}
+	if (temp_value < IRIS_CCT_MIN_VALUE)
+ 		temp_value = IRIS_CCT_MIN_VALUE;
+ 	else if (temp_value > IRIS_CCT_MAX_VALUE)
+ 		temp_value = IRIS_CCT_MAX_VALUE;
+ 	temp_value = temp_value + temp_adjust - 3200;
 
+ 	if (chip_setting->hdr_setting.hdren) {
+ 		iris_cmlut_grcp_set(panel, CMI_HDR_6500_C51_ENDIAN, (u32)IRIS_CMLUT_IP_ADDR);
+ 	} else if (chip_setting->sdr_setting.sdr2hdr) {
+ 		if (1 == chip_setting->sdr_setting.sdr2hdr)
+ 			iris_cmlut_color_temp_set(temp_value, CM_SDR_GAME);
+ 		else if (2 == chip_setting->sdr_setting.sdr2hdr)
+ 			iris_cmlut_color_temp_set(temp_value, CM_SDR_VIDEO);
+ 		iris_cmlut_grcp_set(panel, CMI_CALCULATION, (u32)IRIS_CMLUT_IP_ADDR);
+ 	} else {
+ 		if (chip_setting->cm_setting.color_temp_en) {
+ 			if (chip_setting->cm_setting.sensor_auto_en) {
+ 				iris_cmlut_color_temp_set(temp_value, chip_setting->cm_setting.cm3d);
+ 				iris_cmlut_grcp_set(panel, CMI_CALCULATION, (u32)IRIS_CMLUT_IP_ADDR);
+ 			} else {
+ 				iris_cmlut_color_temp_set(chip_setting->cct_value.cctvalue, chip_setting->cm_setting.cm3d);
+ 				iris_cmlut_grcp_set(panel, CMI_CALCULATION, (u32)IRIS_CMLUT_IP_ADDR);
+ 			}
+ 		} else {
+ 			switch (chip_setting->cm_setting.cm3d) {
+ 				case CM_NTSC:
+ 				iris_cmlut_grcp_set(panel, CMI_NTSC_6500, (u32)IRIS_CMLUT_IP_ADDR);
+ 				break;
+ 				case CM_sRGB:
+ 				iris_cmlut_grcp_set(panel, CMI_SRGB_6500, (u32)IRIS_CMLUT_IP_ADDR);
+ 				break;
+ 				case CM_DCI_P3:
+ 				iris_cmlut_grcp_set(panel, CMI_P3_6500, (u32)IRIS_CMLUT_IP_ADDR);
+ 				break;
+ 				default:
+ 				break;
+ 			}
+ 		}
+	}
 }
 
 
@@ -588,18 +611,18 @@ void iris_datapath_csc_enable(u32 hdr_en)
 		iris_cmd_reg_add(&grcp_cmd, 0xf1a04018, 0x00000000);
 		iris_cmd_reg_add(&grcp_cmd, 0xf1a0401c, 0x00000000);
 		//cm CSC
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560100, 0x0000000f);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560104, 0x09510951);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560108, 0x00000951);
-		iris_cmd_reg_add(&grcp_cmd, 0xf156010c, 0x11227e80);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560110, 0x7acc0d6e);
-		//registers
-		iris_cmd_reg_add(&grcp_cmd, 0xf1241000, 0xc9100010);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560000, 0x8820e000);
-		//update
-		iris_cmd_reg_add(&grcp_cmd, 0xf157ffd0, 0x00000100);
-		//iris_reg_add(0xf1a1ff00, 0x00000100);peaking CSC doesn't need update.
-		iris_cmd_reg_add(&grcp_cmd, 0xf1250000, 0x00000100);
+		iris_cmd_reg_add(&grcp_cmd, 0xf1560100, 0x00000011);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf1560104, 0x09DC773A);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf1560108, 0x090B04A8);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf156010c, 0x13777E3B);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf1560110, 0x013A090B);
+
+ 		// ximi miui shit
+ 		iris_cmd_reg_add(&grcp_cmd, 0xF1560114, 0x00007132);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF1560118, 0x3ED63ED6);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF156011C, 0x00003ED6);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF1241000, 0xE4100010);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf1560000, 0x8820E000);
 	} else {
 		iris_cmd_reg_add(&grcp_cmd, 0xf1240304, 0x04b27ca7);
 		iris_cmd_reg_add(&grcp_cmd, 0xf1240308, 0x7f5a7d5a);
@@ -622,14 +645,15 @@ void iris_datapath_csc_enable(u32 hdr_en)
 		iris_cmd_reg_add(&grcp_cmd, 0xf1560108, 0x00000800);
 		iris_cmd_reg_add(&grcp_cmd, 0xf156010c, 0x0e307d40);
 		iris_cmd_reg_add(&grcp_cmd, 0xf1560110, 0x7a480b38);
-		//registers
-		iris_cmd_reg_add(&grcp_cmd, 0xf1241000, 0xe4100010);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1560000, 0x0820e000);//Sephy debug here
-		//update
-		iris_cmd_reg_add(&grcp_cmd, 0xf157ffd0, 0x00000100);
-		//iris_reg_add(0xf1a1ff00, 0x00000100);
-		iris_cmd_reg_add(&grcp_cmd, 0xf1250000, 0x00000100);
-	}
+		iris_cmd_reg_add(&grcp_cmd, 0xF1560114, 0x00000000);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF1560118, 0x00000000);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF156011C, 0x00000000);
+     	iris_cmd_reg_add(&grcp_cmd, 0xF1241000, 0xE4100010);
+ 		iris_cmd_reg_add(&grcp_cmd, 0xf1560000, 0x0820E000);
+ 	}
+
+ 	iris_cmd_reg_add(&grcp_cmd, 0xF157FFD0, 0x100);
+   	iris_cmd_reg_add(&grcp_cmd, 0xF1250000, 0x100);
 
 	grcp_len = (grcp_cmd.cmd_len - GRCP_HEADER) / 4;
 	*(u32 *)(grcp_cmd.cmd + 8) = cpu_to_le32(grcp_len + 1);
@@ -727,8 +751,10 @@ int iris_configure(u32 type, u32 value)
 		settint_update->lp_memc_setting = true;
 		break;
 	case IRIS_COLOR_ADJUST:
-		user_setting->color_adjust = value & 0xff;
-		settint_update->color_adjust = true;
+		user_setting->color_adjust.saturation = value & 0xff;
+ 		user_setting->color_adjust.hue = (value & 0xff00) >> 8;
+ 		user_setting->color_adjust.Contrast = (value & 0xff0000) >> 16;
+ 		user_setting->color_adjust.update = true;
 		break;
 	case IRIS_LCE_SETTING:
 		user_setting->lce_setting.mode = value & 0xf;
@@ -791,6 +817,12 @@ int iris_configure(u32 type, u32 value)
 		user_setting->hdr_setting.update = 1;
 		settint_update->hdr_setting = true;
 		break;
+	case IRIS_SDR_TO_HDR:
+ 		if (user_setting->sdr_setting.sdr2hdr != value) {
+ 			user_setting->sdr_setting.sdr2hdr = value;
+ 			settint_update->sdr_setting = true;
+ 		}
+ 		break;
 	case IRIS_GAMMA_TABLE_EN:
 		user_setting->gamma_enable = value;
 		settint_update->gamma_table = true;
@@ -1037,8 +1069,11 @@ static int iris_configure_get(u32 type, u32 count, u32 *values)
 	case IRIS_HDR_SETTING:
 		*values = *((u32 *)&chip_setting->hdr_setting);
 		break;
-	case IRIS_COLOR_ADJUST:
-		*values = chip_setting->color_adjust & 0xff;
+	case IRIS_SDR_TO_HDR:
+ 		*values = chip_setting->sdr_setting.sdr2hdr;
+ 		break;
+ 	case IRIS_COLOR_ADJUST:
+ 		*values = *((u32 *)&chip_setting->color_adjust);
 		break;
 	case IRIS_PQ_CONFIG:
 		*values = *((u32 *)&chip_setting->pq_setting);
@@ -1236,7 +1271,7 @@ int iris_feature_setting_update_proc(void)
 		&& !settint_update->lce_setting &&!settint_update->cm_setting
 		&& !settint_update->lux_value && !settint_update->cct_value
 		&& !settint_update->reading_mode && !settint_update->hdr_setting
-		&& !settint_update->gamma_table)
+		&& !settint_update->gamma_table && !settint_update->sdr_setting)
 		return 0;
 
 	
@@ -1263,7 +1298,7 @@ int iris_feature_setting_update_proc(void)
 
 	if (settint_update->color_adjust) {
 		chip_setting->color_adjust = user_setting->color_adjust;
-		iris_cmd_reg_add(&meta_cmd, IRIS_COLOR_ADJUST_ADDR, (u32)chip_setting->color_adjust | 0x80000000);
+		iris_cmd_reg_add(&meta_cmd, IRIS_COLOR_ADJUST_ADDR, *((u32 *)&chip_setting->color_adjust));
 		settint_update->color_adjust = false;
 	}
 	//LCE Setting,DSC_ENCODER_ALG_PARM2
@@ -1303,6 +1338,19 @@ int iris_feature_setting_update_proc(void)
 		settint_update->hdr_setting = false;
 	}
 
+	// SDR to HDR
+ 	if (settint_update->sdr_setting) {
+ 		if ((chip_setting->sdr_setting.sdr2hdr != user_setting->sdr_setting.sdr2hdr)
+ 			&& !chip_setting->hdr_setting.hdren) {
+ 			lut_table_update = true;
+ 			gamma_table_update = true;
+ 			iris_cmd_reg_add(&meta_cmd, CM_SHADOW_UPDATE, (1 << 8));
+ 			iris_cmd_reg_add(&meta_cmd, IRIS_SDR_SETTING_ADDR, user_setting->sdr_setting.sdr2hdr + (1 << 31));
+ 		}
+ 		chip_setting->sdr_setting = user_setting->sdr_setting;
+ 		settint_update->sdr_setting = false;
+ 	}
+
 	// Lux value
 	if (settint_update->lux_value) {
 		chip_setting->lux_value = user_setting->lux_value;
@@ -1339,7 +1387,7 @@ int iris_feature_setting_update_proc(void)
 	}
 
 	if (lut_table_update) {
-		iris_cmlut_table_update(iris_panel, cm3d_indx);
+		iris_cmlut_table_update(iris_panel, chip_setting);
 	}
 	if (gamma_table_update) {
 		iris_gamma_table_update(chip_setting);
@@ -1438,9 +1486,17 @@ int iris_low_power_process(void)
 			|| (IRIS_MODE_RFB_PREPARE == mode_state->sf_notify_mode));
 
 	cm_switch = settint_update->hdr_setting
+				|| settint_update->sdr_setting
 				|| settint_update->gamma_table
 				|| (settint_update->cm_setting
-					&& (chip_setting->cm_setting.cm3d != user_setting->cm_setting.cm3d));
+					&& ((chip_setting->cm_setting.cm3d
+ 							!= user_setting->cm_setting.cm3d)
+ 						|| (chip_setting->cm_setting.color_temp_en
+ 							!= user_setting->cm_setting.color_temp_en)
+ 						|| (chip_setting->cm_setting.color_temp
+ 							!= user_setting->cm_setting.color_temp)
+ 						|| (chip_setting->cm_setting.color_temp_adjust
+ 							!= user_setting->cm_setting.color_temp_adjust)));
 
 	if (lp_switch || mode_switch || cm_switch) {
 		iris_i2c_reg_read(IRIS_MIPI_RX_ADDR + DCS_CMD_PARA_2, &val);

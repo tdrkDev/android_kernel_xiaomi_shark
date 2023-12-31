@@ -165,9 +165,16 @@ enum cmlut_buffer_index {
     CMI_P3_8000,
     CMI_HDR_2800,
     CMI_HDR_6500_C51_ENDIAN,
-    CMI_HDR_8000,
-    CMI_CALCULATION, //16
-    CMI_TOTAL,
+    CMI_SDR_GAME_2800,
+	CMI_SDR_GAME_6500,
+	CMI_SDR_GAME_6500_C51_ENDIAN,
+	CMI_SDR_GAME_8000,
+	CMI_SDR_VIDEO_2800,
+	CMI_SDR_VIDEO_6500,
+	CMI_SDR_VIDEO_6500_C51_ENDIAN,
+	CMI_SDR_VIDEO_8000,
+	CMI_CALCULATION,
+	CMI_TOTAL, //24
 };
 
 enum cm3d_index {
@@ -175,6 +182,8 @@ enum cm3d_index {
 	CM_sRGB,
 	CM_DCI_P3,
 	CM_HDR,
+	CM_SDR_GAME,
+	CM_SDR_VIDEO,
 };
 
 enum iris_lp_state {
@@ -476,6 +485,17 @@ struct iris_reading_mode {
 	u32 update:1;
 };
 
+struct iris_sdr_setting {
+  	u32 sdr2hdr;
+ };
+
+ struct iris_color_adjust {
+  	u32 saturation:8;
+  	u32 hue:8;
+  	u32 Contrast:8;
+  	u32 reserved:7;
+  	u32 update:1;
+ };
 
 struct feature_setting {
 	struct iris_pq_setting pq_setting;
@@ -487,7 +507,8 @@ struct feature_setting {
 	struct iris_lux_value lux_value;
 	struct iris_cct_value cct_value;
 	struct iris_reading_mode reading_mode;
-	u8 color_adjust; //todo
+	struct iris_sdr_setting sdr_setting;
+  	struct iris_color_adjust color_adjust;
 	u8 gamma_enable; // todo
 };
 
@@ -507,7 +528,8 @@ struct iris_setting_update {
 	uint32_t demo_win_peaking:1;
 	uint32_t demo_win_cm:1;
 	uint32_t gamma_table:1;
-	uint32_t reserved:17;
+	uint32_t sdr_setting:1;
+ 	uint32_t reserved:16;
 };
 
 struct iris_power_status {

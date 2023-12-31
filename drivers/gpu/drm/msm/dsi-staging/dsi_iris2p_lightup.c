@@ -82,12 +82,12 @@ void iris_timing_init(struct dsi_iris_info *iris_info)
 	pinput_timing->fps = 60;
 
 	poutput_timing->hres = 1080;
-	poutput_timing->hfp = 100;
-	poutput_timing->hbp = 80;
-	poutput_timing->hsw = 20;
+	poutput_timing->hfp = 132;
+ 	poutput_timing->hbp = 84;
+ 	poutput_timing->hsw = 12;
 	poutput_timing->vres = 2160;
 	poutput_timing->vbp = 24;
-	poutput_timing->vfp = 4;
+	poutput_timing->vfp = 16;
 	poutput_timing->vsw = 2;
 	poutput_timing->fps = 60;
 }
@@ -133,7 +133,7 @@ void iris_mipi_info_init(struct dsi_iris_info *iris_info)
 	rx_setting->mipirx_eot_ecc_crc_disable = 7;
 	rx_setting->mipirx_data_lane_timing_param = 0xff09;
 
-	tx_setting->mipitx_dsi_tx_ctrl = 0x0A00C039;
+	tx_setting->mipitx_dsi_tx_ctrl = 0x0A00A039;
 	tx_setting->mipitx_hs_tx_timer = 0x0083D600;
 	tx_setting->mipitx_bta_lp_timer = 0x00ffff17;
 	tx_setting->mipitx_initialization_reset_timer = 0x0a8c0780;
@@ -196,6 +196,13 @@ void iris_feature_setting_init(struct feature_setting *setting)
 
 	setting->reading_mode.readingmode = 0;
 	setting->reading_mode.update = 1;
+
+	setting->sdr_setting.sdr2hdr = 0;
+
+ 	setting->color_adjust.saturation = 128;
+ 	setting->color_adjust.hue = 90;
+ 	setting->color_adjust.Contrast = 50;
+ 	setting->color_adjust.update = 1;
 
 	setting->gamma_enable = 1;
 }
@@ -261,6 +268,14 @@ void iris_feature_setting_update_check(void)
 
 	if (user_setting->reading_mode.readingmode != chip_setting->reading_mode.readingmode)
 		settint_update->reading_mode = true;
+
+	if (user_setting->sdr_setting.sdr2hdr != chip_setting->sdr_setting.sdr2hdr)
+  		user_setting->sdr_setting.sdr2hdr = chip_setting->sdr_setting.sdr2hdr;
+
+  	if ((user_setting->color_adjust.saturation != chip_setting->color_adjust.saturation)
+  		|| (user_setting->color_adjust.hue != chip_setting->color_adjust.hue)
+  		|| (user_setting->color_adjust.Contrast != chip_setting->color_adjust.Contrast))
+  		settint_update->color_adjust = true;
 
 	if (user_setting->gamma_enable != chip_setting->gamma_enable)
 		settint_update->gamma_table = true;
@@ -910,12 +925,21 @@ void iris_feature_init_cmd_send(struct dsi_panel *panel, enum dsi_cmd_set_state 
 	} else {
 		iris_cmd_reg_add(&grcp_cmd, IRIS_READING_MODE_ADDR, 0x0);
 	}
-	iris_cmd_reg_add(&grcp_cmd, IRIS_COLOR_ADJUST_ADDR, 0x0);
+
+	if (settint_update->color_adjust) {
+  		chip_setting->color_adjust = user_setting->color_adjust;
+  		iris_cmd_reg_add(&grcp_cmd, IRIS_COLOR_ADJUST_ADDR, *((u32 *)&chip_setting->color_adjust));
+  		settint_update->color_adjust = false;
+  	} else {
+  		iris_cmd_reg_add(&grcp_cmd, IRIS_COLOR_ADJUST_ADDR, 0x325a80);
+  	}
+
 	iris_cmd_reg_add(&grcp_cmd, IRIS_HDR_SETTING_ADDR, 0x0);
 	iris_cmd_reg_add(&grcp_cmd, IRIS_TRUECUT_INFO_ADDR, 0x0);
 	iris_cmd_reg_add(&grcp_cmd, IRIS_LUX_VALUE_ADDR, 0x0);
 	iris_cmd_reg_add(&grcp_cmd, IRIS_CCT_VALUE_ADDR, 0x0);
 	iris_cmd_reg_add(&grcp_cmd, IRIS_DRC_INFO_ADDR, 0x0);
+	iris_cmd_reg_add(&grcp_cmd, IRIS_SDR_SETTING_ADDR, 0x0);
 
 	grcp_len = (grcp_cmd.cmd_len - GRCP_HEADER) / 4;
 	*(u32 *)(grcp_cmd.cmd + 8) = cpu_to_le32(grcp_len + 1);
@@ -1461,7 +1485,7 @@ void iris_firmware_cmlut_update(u8 *buf, u32 cm3d)
 		case CM_HDR:		//table for hdr
 		iris_firmware_cmlut_table_copy(buf, IRIS_CMLUT_2800K_ADDR, (u8 *)(lut_info->cmlut[CMI_HDR_2800]), IRIS_CM_LUT_LENGTH * 4);
 		iris_firmware_cmlut_table_copy(buf, IRIS_CMLUT_6500K_ADDR, (u8 *)(lut_info->cmlut[CMI_HDR_6500_C51_ENDIAN]), IRIS_CM_LUT_LENGTH * 4);
-		iris_firmware_cmlut_table_copy(buf, IRIS_CMLUT_8000K_ADDR, (u8 *)(lut_info->cmlut[CMI_HDR_8000]), IRIS_CM_LUT_LENGTH * 4);
+		iris_firmware_cmlut_table_copy(buf, IRIS_CMLUT_8000K_ADDR, (u8 *)(lut_info->cmlut[CMI_HDR_6500_C51_ENDIAN]), IRIS_CM_LUT_LENGTH * 4);
 		break;
 	}
 }

@@ -85,6 +85,7 @@ enum iris_config_type {
 	IRIS_CCT_VALUE = 35,												//35
 	IRIS_READING_MODE = 36,
 	IRIS_HDR_SETTING = 50,
+	IRIS_SDR_TO_HDR = 51,
 	IRIS_GAMMA_TABLE_EN = 58,
 
 	// For config only used in system, start from 100 if possible.
