@@ -135,7 +135,9 @@ static int slide_button_probe(struct platform_device *pdev) {
 
     ret = devm_request_threaded_irq(&pdev->dev, sb->irq, NULL,
                                     slide_button_irq_trigger_handler,
-                                    IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
+                                    IRQF_TRIGGER_RISING
+                                    | IRQF_TRIGGER_FALLING
+                                    | IRQF_ONESHOT,
                                     "slide_button", sb);
     if (ret) {
         pr_err("%s: failed to request irq\n", __func__);
