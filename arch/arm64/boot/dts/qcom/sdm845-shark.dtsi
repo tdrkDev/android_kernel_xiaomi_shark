@@ -273,21 +273,24 @@
         };
 };
 */
- &pmi8998_haptics {
-        qcom,vmax-mv = <2828>;
-        qcom,wave-play-rate-us = <4878>;
-		qcom,wave-play-shark-long-rate-us = <5155>;
-        qcom,lra-auto-mode;
-        qcom,wave-shape = "sine";
+&pmi8998_haptics {
+	status = "ok";
 
-        /* add buf waveform self-defined */
-        qcom,effect-max = <3>;
-        qcom,effect-arry = [7e b0 00 00 00 00 00 00
-			3e 3e 3e be a0 00 00 00
-			7e 7e 7e 7e be be 00 00];
+	qcom,actuator-type = "lra";
+	qcom,lra-resonance-sig-shape = "sine";
+	qcom,lra-auto-resonance-mode = "qwd";
 
-        status = "okay";
- };
+	qcom,vmax-mv = <2828>;
+	qcom,ilim-ma = <800>;
+	qcom,play-rate-us = <4878>;
+
+	wf_0 { qcom,wf-vmax-mv = <2828>; };
+	wf_1 { qcom,wf-vmax-mv = <2828>; };
+	wf_2 { qcom,wf-vmax-mv = <2828>; };
+	wf_3 { qcom,wf-vmax-mv = <2828>; };
+	wf_4 { qcom,wf-vmax-mv = <2828>; };
+	wf_5 { qcom,wf-vmax-mv = <2828>; };
+};
 
 &qupv3_se3_i2c {
     status = "ok";
