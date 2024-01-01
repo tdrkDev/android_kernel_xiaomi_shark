@@ -104,8 +104,8 @@ void iris_clock_tree_init(struct dsi_iris_info *iris_info)
 	pll->ppll_ctrl2 = 0x58258C;
 
 	pll->dpll_ctrl0 = 0x2002;
-	pll->dpll_ctrl1 = 0x231101;
-	pll->dpll_ctrl2 = 0xA3D71;
+	pll->dpll_ctrl1 = 0x241101;
+	pll->dpll_ctrl2 = 0xB0F2;
 
 	pll->mpll_ctrl0 = 0x2;
 	pll->mpll_ctrl1 = 0x3e0901;
