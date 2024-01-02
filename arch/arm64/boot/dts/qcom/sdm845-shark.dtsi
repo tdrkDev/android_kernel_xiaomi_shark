@@ -276,20 +276,69 @@
 &pmi8998_haptics {
 	status = "ok";
 
+	qcom,vmax-mv = <2800>;
+	qcom,ilim-ma = <800>;
+	qcom,play-rate-us = <5252>;
+
 	qcom,actuator-type = "lra";
 	qcom,lra-resonance-sig-shape = "sine";
 	qcom,lra-auto-resonance-mode = "qwd";
+	qcom,lra-allow-variable-play-rate;
+	qcom,lra-auto-resonance-disable;
 
-	qcom,vmax-mv = <2828>;
-	qcom,ilim-ma = <800>;
-	qcom,play-rate-us = <4878>;
-
-	wf_0 { qcom,wf-vmax-mv = <2828>; };
-	wf_1 { qcom,wf-vmax-mv = <2828>; };
-	wf_2 { qcom,wf-vmax-mv = <2828>; };
-	wf_3 { qcom,wf-vmax-mv = <2828>; };
-	wf_4 { qcom,wf-vmax-mv = <2828>; };
-	wf_5 { qcom,wf-vmax-mv = <2828>; };
+	wf_0 {
+		/* CLICK */
+		qcom,effect-id = <0>;
+		qcom,wf-vmax-mv = <2700>;
+		qcom,wf-pattern = [7e 7e 7e];
+		qcom,wf-brake-pattern = [01 00 01 00];
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4255>;
+	};
+	wf_1 {
+		/* DOUBLE CLICK */
+		qcom,effect-id = <1>;
+		qcom,wf-vmax-mv = <2700>;
+		qcom,wf-pattern = [7e 7e 02 02 02 02 02 02];
+		qcom,wf-repeat-count = <2>;
+		qcom,wf-s-repeat-count = <1>;
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4255>;
+	};
+	wf_2 {
+		/* TICK */
+		qcom,effect-id = <2>;
+		qcom,wf-vmax-mv = <2600>;
+		qcom,wf-pattern = [7e];
+		qcom,wf-brake-pattern = [01 00 00 00];
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4255>;
+	};
+	wf_3 {
+		/* THUD */
+		qcom,effect-id = <3>;
+		qcom,wf-vmax-mv = <2700>;
+		qcom,wf-pattern = [7e 7e 7e];
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4255>;
+	};
+	wf_4 {
+		/* POP */
+		qcom,effect-id = <4>;
+		qcom,wf-vmax-mv = <2600>;
+		qcom,wf-pattern = [7e];
+		qcom,wf-brake-pattern = [01 00 01 00];
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4255>;
+	};
+	wf_5 {
+		/* HEAVY CLICK */
+		qcom,effect-id = <5>;
+		qcom,wf-vmax-mv = <3100>;
+		qcom,wf-pattern = [7e 7e 7e 7e 02 02 7e 7e];
+		qcom,lra-auto-resonance-disable;
+		qcom,wf-play-rate-us = <4155>;
+	};
 };
 
 &qupv3_se3_i2c {
