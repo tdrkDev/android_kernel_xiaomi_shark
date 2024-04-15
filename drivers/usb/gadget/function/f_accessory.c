@@ -1368,6 +1368,7 @@ static int acc_setup(void)
 		ret = -EBUSY;
 		goto err_free_dev;
 	}
+
 	ret = misc_register(&acc_device);
 	if (ret)
 		goto err_zap_ptr;
