@@ -39,6 +39,14 @@
 #include "codecs/wcd934x/wcd934x-mbhc.h"
 #include "codecs/wsa881x.h"
 
+// Stock kernel selects 1 for TAS2559 and 2 for MAX98927L
+// We omit the latter one cause it's not used in production devices
+// (see device's dts)
+//
+// Required for spkr_prot and spkcal modules in audio HAL
+static int audio_smartpa_type = 1;
+module_param_named(smartpa_type, audio_smartpa_type, int, 0444);
+
 #define DRV_NAME "sdm845-asoc-snd"
 
 #define __CHIPSET__ "SDM845 "
@@ -6828,11 +6836,6 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			       msm_mi2s_be_dai_links,
 			       sizeof(msm_mi2s_be_dai_links));
 			total_links += ARRAY_SIZE(msm_mi2s_be_dai_links);
-
-				memcpy(msm_tavil_snd_card_dai_links + total_links,
-						msm_quat_mi2s_tas2559_dai_links,
-						sizeof(msm_quat_mi2s_tas2559_dai_links));
-				total_links += ARRAY_SIZE(msm_quat_mi2s_tas2559_dai_links);
 		}
 		if (of_property_read_bool(dev->of_node,
 					  "qcom,auxpcm-audio-intf")) {
@@ -6840,6 +6843,16 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			msm_auxpcm_be_dai_links,
 			sizeof(msm_auxpcm_be_dai_links));
 			total_links += ARRAY_SIZE(msm_auxpcm_be_dai_links);
+		}
+		if (of_property_read_bool(dev->of_node,
+					  "qcom,tas2559_smartpa")) {
+			dev_dbg(dev, "%s(): TAS2559 audio codec support present\n",
+				__func__);
+			memcpy(msm_tavil_snd_card_dai_links + total_links,
+					msm_quat_mi2s_tas2559_dai_links,
+					sizeof(msm_quat_mi2s_tas2559_dai_links));
+			total_links += ARRAY_SIZE(msm_quat_mi2s_tas2559_dai_links);
+			audio_smartpa_type = 1;
 		}
 		dailink = msm_tavil_snd_card_dai_links;
 	} else if (!strcmp(match->data, "stub_codec")) {
